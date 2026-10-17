@@ -50,7 +50,17 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
+    let res = Resource::new(|| (), move |_| data());
+
     view! {
+      <ErrorBoundary fallback=|_| "Test">
+        <Suspense>{move || res.and_then(|v| v.into_iter().map(|n| view! { <p>{n.clone()}</p> }).collect_view())}</Suspense>
+      </ErrorBoundary>
     }
 }
 
+#[server]
+async fn data() -> Result<Vec<String>, ServerFnError> {
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    Ok(vec!["1".into(), "2".into(), "3".into(), "4".into()])
+}
