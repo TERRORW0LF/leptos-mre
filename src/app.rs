@@ -51,30 +51,26 @@ pub fn App() -> impl IntoView {
 #[component]
 fn HomePage() -> impl IntoView {
     let res = Resource::new(|| (), move |_| data2());
+    let res3 = Resource::new(|| (), move |_| data3());
 
     view! {
-      <div>
-        <label for="data">"Data"</label>
-        <input list="data-list" name="data" id="data" />
-        <datalist id="data-list">
-          <ErrorBoundary fallback=|_| ()>
-            <Await future=data() let:nums>
-              {nums
-                .clone()
+      <ErrorBoundary fallback=|_| ()>
+        <Await future=data() let:nums>
+          {nums
+            .clone()
+            .map(|v| {
+              v.into_iter()
                 .map(|v| {
-                  v.into_iter()
-                    .map(|v| {
-                      view! { <option value=v.clone()>{v.clone()}</option> }
-                    })
-                    .collect_view()
-                })}
-            </Await>
-          </ErrorBoundary>
-        </datalist>
-      </div>
-      <ErrorBoundary fallback=|_| "Test">
-        <Suspense>{move || res.and_then(|v| view! { <p>{v.clone()}</p> }).collect_view()}</Suspense>
+                  view! { <option value=v.clone()>{v.clone()}</option> }
+                })
+                .collect_view()
+            })}
+        </Await>
       </ErrorBoundary>
+      <Suspense>{move || res.and_then(|v| v.iter().map(|n| view! { <p>{n.clone()}</p> }).collect_view())}</Suspense>
+      <Suspense>
+        {move || res3.and_then(|v| v.iter().map(|n| view! { <div>{n.clone()}"-"{n.clone()}</div> }).collect_view())}
+      </Suspense>
     }
 }
 
@@ -85,5 +81,12 @@ async fn data() -> Result<Vec<String>, ServerFnError> {
 
 #[server]
 async fn data2() -> Result<Vec<String>, ServerFnError> {
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     Ok(vec!["1".into(), "2".into(), "3".into(), "4".into()])
+}
+
+#[server]
+async fn data3() -> Result<Vec<String>, ServerFnError> {
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    Ok(vec!["1".into(), "2".into(), "3".into(), "4".into(), "5".into()])
 }
